@@ -18,7 +18,7 @@ import {
 
 const STATUS = {
   entregado:  { label: "Entregado",  color: "#1A8A3C", bg: "#F0FBF4", icon: CheckCircle2 },
-  en_transito:{ label: "En tránsito",color: "#0066CC", bg: "#F0F4FF", icon: Truck },
+  en_transito:{ label: "En tránsito",color: "#2563EB", bg: "#EFF6FF", icon: Truck },
   procesando: { label: "Procesando", color: "#C87000", bg: "#FFF8EC", icon: Clock },
   pendiente:  { label: "Pendiente",  color: "#6E6E73", bg: "#F5F5F7", icon: AlertCircle },
 };
@@ -56,7 +56,7 @@ export default function DashboardPage() {
   const margenPct     = ((totalUtilidad / totalIngresos) * 100).toFixed(1);
 
   return (
-    <div className="flex flex-col min-h-screen page-enter">
+    <div className="flex flex-col min-h-screen page-enter" style={{ background: "#EEF2F7" }}>
       <Header title="Dashboard General" subtitle="Resumen ejecutivo · Junio 2024" />
 
       <div className="flex-1 p-8 max-w-[1200px] w-full mx-auto space-y-6">
@@ -91,7 +91,7 @@ export default function DashboardPage() {
             <>
               <MetricCard title="Ingresos (Jun)" value={shortCOP(financeKPIs.ingresosMes)}
                 change={financeKPIs.ingresosCambio} icon={TrendingUp}
-                iconColor="#0066CC" iconBg="#F0F4FF" subtitle="vs. mes anterior" />
+                iconColor="#2563EB" iconBg="#EFF6FF" subtitle="vs. mes anterior" />
               <MetricCard title="Gastos (Jun)" value={shortCOP(financeKPIs.gastosMes)}
                 change={-financeKPIs.gastosCambio} icon={TrendingDown}
                 iconColor="#FF9F0A" iconBg="#FFF8EC" subtitle="vs. mes anterior" />
@@ -117,7 +117,7 @@ export default function DashboardPage() {
               </div>
               <div className="flex items-center gap-4">
                 {[
-                  { color: "#0066CC", label: "Ingresos" },
+                  { color: "#2563EB", label: "Ingresos" },
                   { color: "#FF9F0A", label: "Gastos" },
                   { color: "#34C759", label: "Utilidad" },
                 ].map((l) => (
@@ -135,8 +135,8 @@ export default function DashboardPage() {
                 <AreaChart data={monthlyFinancials} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
                   <defs>
                     <linearGradient id="gIngresos" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#0066CC" stopOpacity={0.12} />
-                      <stop offset="95%" stopColor="#0066CC" stopOpacity={0} />
+                      <stop offset="5%"  stopColor="#2563EB" stopOpacity={0.12} />
+                      <stop offset="95%" stopColor="#2563EB" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="gUtilidad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%"  stopColor="#34C759" stopOpacity={0.12} />
@@ -147,7 +147,7 @@ export default function DashboardPage() {
                   <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#AEAEB2" }} axisLine={false} tickLine={false} />
                   <YAxis tickFormatter={(v) => shortCOP(v)} tick={{ fontSize: 10, fill: "#AEAEB2" }} axisLine={false} tickLine={false} width={60} />
                   <Tooltip content={<ChartTooltip />} cursor={{ stroke: "#E0E0E0", strokeWidth: 1 }} />
-                  <Area type="monotone" dataKey="ingresos" stroke="#0066CC" strokeWidth={2} fill="url(#gIngresos)" dot={false} />
+                  <Area type="monotone" dataKey="ingresos" stroke="#2563EB" strokeWidth={2} fill="url(#gIngresos)" dot={false} />
                   <Area type="monotone" dataKey="gastos" stroke="#FF9F0A" strokeWidth={2} fill="none" strokeDasharray="5 3" dot={false} />
                   <Area type="monotone" dataKey="utilidad" stroke="#34C759" strokeWidth={2} fill="url(#gUtilidad)" dot={false} />
                 </AreaChart>
@@ -193,7 +193,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-[16px] font-semibold text-[#1D1D1F]">Pedidos Recientes</h2>
               <a href="/operaciones" className="flex items-center gap-1 text-[12px] font-medium transition-colors"
-                style={{ color: "#0066CC" }}>
+                style={{ color: "#2563EB" }}>
                 Ver todos <ArrowUpRight size={13} />
               </a>
             </div>
@@ -248,7 +248,7 @@ export default function DashboardPage() {
 
             <div className="space-y-5">
               {[
-                { label: "Total Ingresos", value: formatCOP(totalIngresos), color: "#0066CC", pct: 100 },
+                { label: "Total Ingresos", value: formatCOP(totalIngresos), color: "#2563EB", pct: 100 },
                 { label: "Total Gastos",   value: formatCOP(totalGastos),   color: "#FF9F0A", pct: (totalGastos / totalIngresos) * 100 },
                 { label: "Utilidad Total", value: formatCOP(totalUtilidad), color: "#34C759", pct: (totalUtilidad / totalIngresos) * 100 },
               ].map((item) => (
@@ -275,9 +275,9 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 mt-3 px-3 py-2.5 rounded-[10px]" style={{ background: "#F0F4FF" }}>
-              <Package size={14} style={{ color: "#0066CC" }} />
-              <p className="text-[12px] font-medium" style={{ color: "#0066CC" }}>
+            <div className="flex items-center gap-2 mt-3 px-3 py-2.5 rounded-[10px]" style={{ background: "#EFF6FF" }}>
+              <Package size={14} style={{ color: "#2563EB" }} />
+              <p className="text-[12px] font-medium" style={{ color: "#2563EB" }}>
                 {operationsKPIs.productosBajoStock} productos bajo stock mínimo
               </p>
             </div>

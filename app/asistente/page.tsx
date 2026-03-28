@@ -130,7 +130,7 @@ export default function AsistentePage() {
             style={{ background: "#fff", borderRight: "1px solid #F0F0F0" }}
           >
             <div className="flex items-center gap-2 mb-4">
-              <Sparkles size={14} style={{ color: "#0066CC" }} />
+              <Sparkles size={14} style={{ color: "#2563EB" }} />
               <p className="text-[12px] font-semibold text-[#1D1D1F]">Capacidades</p>
             </div>
             <div className="space-y-2">
@@ -148,9 +148,9 @@ export default function AsistentePage() {
             <button
               onClick={() => fileRef.current?.click()}
               className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-[10px] text-[13px] font-medium text-white btn-press transition-all"
-              style={{ background: "#0066CC" }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "#0077ED")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "#0066CC")}
+              style={{ background: "#2563EB" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#1D4ED8")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "#2563EB")}
             >
               <Upload size={14} />
               Importar archivo
@@ -166,7 +166,7 @@ export default function AsistentePage() {
               <div key={msg.id} className={cn("flex gap-3 message-enter", msg.role === "user" ? "justify-end" : "justify-start")}>
                 {msg.role === "assistant" && (
                   <div className="w-9 h-9 rounded-[12px] flex items-center justify-center flex-shrink-0 mt-0.5"
-                    style={{ background: "linear-gradient(135deg,#0066CC,#5AC8FA)" }}>
+                    style={{ background: "linear-gradient(135deg,#1E40AF,#2563EB)" }}>
                     <Bot size={16} className="text-white" />
                   </div>
                 )}
@@ -174,7 +174,7 @@ export default function AsistentePage() {
                   className="max-w-[70%] px-5 py-4 text-[14px] leading-relaxed"
                   style={{
                     borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
-                    background: msg.role === "user" ? "#0066CC" : "#fff",
+                    background: msg.role === "user" ? "#2563EB" : "#fff",
                     color: msg.role === "user" ? "#fff" : "#1D1D1F",
                     boxShadow: msg.role === "assistant" ? "0 2px 8px rgba(0,0,0,0.06)" : "none",
                   }}
@@ -186,7 +186,7 @@ export default function AsistentePage() {
             {loading && messages[messages.length - 1]?.role !== "assistant" && (
               <div className="flex gap-3 message-enter">
                 <div className="w-9 h-9 rounded-[12px] flex items-center justify-center"
-                  style={{ background: "linear-gradient(135deg,#0066CC,#5AC8FA)" }}>
+                  style={{ background: "linear-gradient(135deg,#1E40AF,#2563EB)" }}>
                   <Bot size={16} className="text-white" />
                 </div>
                 <div className="px-5 py-4 rounded-[18px] rounded-tl-[4px] bg-white shadow-sm">
@@ -207,7 +207,7 @@ export default function AsistentePage() {
                     className="flex items-start gap-3 p-4 text-left rounded-[14px] bg-white transition-all group"
                     style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)", border: "1px solid transparent" }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = "#0066CC";
+                      e.currentTarget.style.borderColor = "#2563EB";
                       e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
                     }}
                     onMouseLeave={(e) => {
@@ -216,11 +216,11 @@ export default function AsistentePage() {
                     }}
                   >
                     <div className="w-8 h-8 rounded-[10px] flex items-center justify-center flex-shrink-0 transition-colors"
-                      style={{ background: "#F0F4FF" }}>
-                      <q.icon size={15} style={{ color: "#0066CC" }} />
+                      style={{ background: "#EFF6FF" }}>
+                      <q.icon size={15} style={{ color: "#2563EB" }} />
                     </div>
                     <div>
-                      <p className="text-[10px] font-semibold mb-0.5" style={{ color: "#0066CC" }}>{q.category}</p>
+                      <p className="text-[10px] font-semibold mb-0.5" style={{ color: "#2563EB" }}>{q.category}</p>
                       <p className="text-[12px] text-[#3D3D3D] leading-snug">{q.text}</p>
                     </div>
                   </button>
@@ -288,9 +288,9 @@ export default function AsistentePage() {
                 onClick={() => send()}
                 disabled={!input.trim() || loading}
                 className="w-10 h-10 flex items-center justify-center rounded-[10px] flex-shrink-0 text-white transition-all btn-press"
-                style={{ background: "#0066CC" }}
-                onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = "#0077ED"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "#0066CC"; }}
+                style={{ background: "#2563EB" }}
+                onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = "#1D4ED8"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "#2563EB"; }}
               >
                 <Send size={16} />
               </button>

@@ -102,9 +102,9 @@ export default function AIAssistant() {
         <button
           onClick={() => setOpen(true)}
           className="fixed bottom-6 right-6 w-13 h-13 flex items-center justify-center rounded-[14px] text-white shadow-lg z-50 btn-press transition-all"
-          style={{ background: "#0066CC", width: 52, height: 52, boxShadow: "0 4px 16px rgba(0,102,204,0.4)" }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "#0077ED")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = "#0066CC")}
+          style={{ background: "#2563EB", width: 52, height: 52, boxShadow: "0 4px 16px rgba(37,99,235,0.4)" }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "#1D4ED8")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "#2563EB")}
         >
           <Sparkles size={20} />
         </button>
@@ -121,7 +121,7 @@ export default function AIAssistant() {
           {/* Header */}
           <div
             className="flex items-center justify-between px-5 py-4 flex-shrink-0"
-            style={{ background: "linear-gradient(135deg,#0066CC,#5AC8FA)" }}
+            style={{ background: "linear-gradient(135deg,#1E40AF,#2563EB)" }}
           >
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-[10px] flex items-center justify-center" style={{ background: "rgba(255,255,255,0.2)" }}>
@@ -163,7 +163,7 @@ export default function AIAssistant() {
               <div key={msg.id} className={cn("flex gap-2 message-enter", msg.role === "user" ? "justify-end" : "justify-start")}>
                 {msg.role === "assistant" && (
                   <div className="w-7 h-7 rounded-[8px] flex items-center justify-center flex-shrink-0 mt-0.5"
-                    style={{ background: "linear-gradient(135deg,#0066CC,#5AC8FA)" }}>
+                    style={{ background: "linear-gradient(135deg,#1E40AF,#2563EB)" }}>
                     <Bot size={12} className="text-white" />
                   </div>
                 )}
@@ -182,7 +182,7 @@ export default function AIAssistant() {
             {loading && messages[messages.length - 1]?.role !== "assistant" && (
               <div className="flex gap-2 message-enter">
                 <div className="w-7 h-7 rounded-[8px] flex items-center justify-center flex-shrink-0"
-                  style={{ background: "linear-gradient(135deg,#0066CC,#5AC8FA)" }}>
+                  style={{ background: "linear-gradient(135deg,#1E40AF,#2563EB)" }}>
                   <Bot size={12} className="text-white" />
                 </div>
                 <div className="px-3.5 py-3 rounded-[14px] rounded-tl-[4px] bg-white shadow-sm">
@@ -200,8 +200,8 @@ export default function AIAssistant() {
                 {SUGGESTIONS.map((q) => (
                   <button key={q} onClick={() => send(q)}
                     className="text-left text-[12px] px-3 py-2 rounded-[10px] transition-colors font-medium"
-                    style={{ background: "#F0F4FF", color: "#0066CC" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "#E4EDFF")}
+                    style={{ background: "#EFF6FF", color: "#2563EB" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#DBEAFE")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "#F0F4FF")}
                   >
                     {q}
@@ -259,7 +259,7 @@ export default function AIAssistant() {
                 onClick={() => send()}
                 disabled={!input.trim() || loading}
                 className="w-8 h-8 flex items-center justify-center rounded-[8px] flex-shrink-0 text-white transition-all btn-press"
-                style={{ background: "#0066CC" }}
+                style={{ background: "#2563EB" }}
                 onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = "#0077ED"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = "#0066CC"; }}
               >
