@@ -1,7 +1,5 @@
 export const runtime = "edge";
 
-import Anthropic from "@anthropic-ai/sdk";
-
 const SYSTEM_PROMPT = `Eres un consultor empresarial de élite y analista financiero experto, especializado en PYMES colombianas. Tienes el conocimiento combinado de los mejores consultores de McKinsey, BCG, y los mejores CFOs y COOs de empresas líderes en Colombia y Latinoamérica.
 
 Tu rol es ser el asistente empresarial de PYME.ai, una plataforma de inteligencia artificial para pequeñas y medianas empresas en Colombia (moneda: COP - Pesos Colombianos).
@@ -29,41 +27,91 @@ export async function POST(request: Request) {
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return Response.json({
-        response: "La API key de IA no está configurada. Por favor configura ANTHROPIC_API_KEY en las variables de entorno de Vercel.",
+        response:
+          "La API key de IA no está configurada. Por favor configura ANTHROPIC_API_KEY en las variables de entorno de Vercel.",
       });
     }
-
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
     const system = fileContext
       ? `${SYSTEM_PROMPT}\n\nCONTEXTO DEL ARCHIVO CARGADO:\n${fileContext}`
       : SYSTEM_PROMPT;
 
-    // Streaming response — no timeout on Edge runtime
-    const stream = client.messages.stream({
-      model: "claude-opus-4-6",
-      max_tokens: 1024,
-      system,
-      messages: messages.map((m: { role: string; content: string }) => ({
-        role: m.role as "user" | "assistant",
-        content: m.content,
-      })),
+    // Use raw fetch — avoids any Node.js SDK incompatibilities with Vercel Edge
+    const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": process.env.ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "claude-opus-4-6",
+        max_tokens: 1024,
+        stream: true,
+        system,
+        messages: messages.map((m: { role: string; content: string }) => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        })),
+      }),
     });
 
+    if (!anthropicRes.ok) {
+      const err = await anthropicRes.text();
+      return Response.json(
+        { response: `Error de la API: ${anthropicRes.status} — ${err}` },
+        { status: 200 }
+      );
+    }
+
+    // Pipe the Anthropic SSE stream → our SSE response
+    const encoder = new TextEncoder();
     const readable = new ReadableStream({
       async start(controller) {
-        const encoder = new TextEncoder();
+        const reader = anthropicRes.body?.getReader();
+        const decoder = new TextDecoder();
+        if (!reader) {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ error: "Sin stream" })}\n\n`)
+          );
+          controller.close();
+          return;
+        }
         try {
-          for await (const chunk of stream) {
-            if (
-              chunk.type === "content_block_delta" &&
-              chunk.delta.type === "text_delta"
-            ) {
-              const data = JSON.stringify({ text: chunk.delta.text });
-              controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value, { stream: true });
+            for (const line of chunk.split("\n")) {
+              if (!line.startsWith("data: ")) continue;
+              const raw = line.slice(6).trim();
+              if (raw === "[DONE]") continue;
+              try {
+                const event = JSON.parse(raw);
+                // Anthropic SSE events
+                if (
+                  event.type === "content_block_delta" &&
+                  event.delta?.type === "text_delta"
+                ) {
+                  controller.enqueue(
+                    encoder.encode(
+                      `data: ${JSON.stringify({ text: event.delta.text })}\n\n`
+                    )
+                  );
+                } else if (event.type === "message_stop") {
+                  controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+                } else if (event.type === "error") {
+                  controller.enqueue(
+                    encoder.encode(
+                      `data: ${JSON.stringify({ error: event.error?.message ?? "Error" })}\n\n`
+                    )
+                  );
+                }
+              } catch {
+                // skip malformed lines
+              }
             }
           }
-          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
         } catch (err) {
           const msg = err instanceof Error ? err.message : "Error";
           controller.enqueue(
