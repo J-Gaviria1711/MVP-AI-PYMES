@@ -38,16 +38,45 @@ export default function AIAssistant() {
     setMessages((p) => [...p, userMsg]);
     setInput("");
     setLoading(true);
+    const assistantId = Date.now() + "_a";
+    setMessages((p) => [...p, { id: assistantId, role: "assistant", content: "", timestamp: new Date() }]);
     try {
       const res = await fetch("/api/ai", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: [...messages, userMsg].map((m) => ({ role: m.role, content: m.content })), fileContext }),
       });
-      const data = await res.json();
-      setMessages((p) => [...p, { id: Date.now() + "_a", role: "assistant", content: data.response || "Error al procesar.", timestamp: new Date() }]);
+
+      // Handle SSE streaming
+      if (res.headers.get("content-type")?.includes("text/event-stream")) {
+        const reader = res.body?.getReader();
+        const decoder = new TextDecoder();
+        let full = "";
+        setLoading(false);
+        while (reader) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value);
+          for (const line of chunk.split("\n")) {
+            if (!line.startsWith("data: ") || line === "data: [DONE]") continue;
+            try {
+              const parsed = JSON.parse(line.slice(6));
+              if (parsed.error) { full = `Error: ${parsed.error}`; }
+              else if (parsed.text) { full += parsed.text; }
+              setMessages((p) => p.map((m) => m.id === assistantId ? { ...m, content: full } : m));
+            } catch { /* skip malformed lines */ }
+          }
+        }
+        if (!full) setMessages((p) => p.map((m) => m.id === assistantId ? { ...m, content: "Error al procesar." } : m));
+      } else {
+        // Fallback: non-streaming JSON
+        const data = await res.json();
+        setMessages((p) => p.map((m) => m.id === assistantId ? { ...m, content: data.response || "Error al procesar." } : m));
+        setLoading(false);
+      }
     } catch {
-      setMessages((p) => [...p, { id: Date.now() + "_e", role: "assistant", content: "Error de conexión. Intenta de nuevo.", timestamp: new Date() }]);
-    } finally { setLoading(false); }
+      setMessages((p) => p.map((m) => m.id === assistantId ? { ...m, content: "Error de conexión. Intenta de nuevo." } : m));
+      setLoading(false);
+    }
   }
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -150,7 +179,7 @@ export default function AIAssistant() {
                 />
               </div>
             ))}
-            {loading && (
+            {loading && messages[messages.length - 1]?.role !== "assistant" && (
               <div className="flex gap-2 message-enter">
                 <div className="w-7 h-7 rounded-[8px] flex items-center justify-center flex-shrink-0"
                   style={{ background: "linear-gradient(135deg,#0066CC,#5AC8FA)" }}>
@@ -159,7 +188,7 @@ export default function AIAssistant() {
                 <div className="px-3.5 py-3 rounded-[14px] rounded-tl-[4px] bg-white shadow-sm">
                   <div className="flex gap-1 items-center h-4">
                     {[0,1,2].map((i) => (
-                      <div key={i} className={`w-1.5 h-1.5 rounded-full typing-dot`}
+                      <div key={i} className="w-1.5 h-1.5 rounded-full typing-dot"
                         style={{ background: "#AEAEB2" }} />
                     ))}
                   </div>

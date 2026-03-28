@@ -54,16 +54,43 @@ export default function AsistentePage() {
     setMessages((p) => [...p, userMsg]);
     setInput("");
     setLoading(true);
+    const assistantId = Date.now() + "_a";
+    setMessages((p) => [...p, { id: assistantId, role: "assistant", content: "", timestamp: new Date() }]);
     try {
       const res = await fetch("/api/ai", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: [...messages, userMsg].map((m) => ({ role: m.role, content: m.content })), fileContext: fileCtx }),
       });
-      const data = await res.json();
-      setMessages((p) => [...p, { id: Date.now() + "_a", role: "assistant", content: data.response || "Lo siento, ocurrió un error.", timestamp: new Date() }]);
+
+      if (res.headers.get("content-type")?.includes("text/event-stream")) {
+        const reader = res.body?.getReader();
+        const decoder = new TextDecoder();
+        let full = "";
+        setLoading(false);
+        while (reader) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value);
+          for (const line of chunk.split("\n")) {
+            if (!line.startsWith("data: ") || line === "data: [DONE]") continue;
+            try {
+              const parsed = JSON.parse(line.slice(6));
+              if (parsed.error) { full = `Error: ${parsed.error}`; }
+              else if (parsed.text) { full += parsed.text; }
+              setMessages((p) => p.map((m) => m.id === assistantId ? { ...m, content: full } : m));
+            } catch { /* skip */ }
+          }
+        }
+        if (!full) setMessages((p) => p.map((m) => m.id === assistantId ? { ...m, content: "Lo siento, ocurrió un error." } : m));
+      } else {
+        const data = await res.json();
+        setMessages((p) => p.map((m) => m.id === assistantId ? { ...m, content: data.response || "Lo siento, ocurrió un error." } : m));
+        setLoading(false);
+      }
     } catch {
-      setMessages((p) => [...p, { id: Date.now() + "_e", role: "assistant", content: "Error de conexión. Verifica tu API key e intenta de nuevo.", timestamp: new Date() }]);
-    } finally { setLoading(false); }
+      setMessages((p) => p.map((m) => m.id === assistantId ? { ...m, content: "Error de conexión. Verifica tu API key e intenta de nuevo." } : m));
+      setLoading(false);
+    }
   }
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -156,7 +183,7 @@ export default function AsistentePage() {
               </div>
             ))}
 
-            {loading && (
+            {loading && messages[messages.length - 1]?.role !== "assistant" && (
               <div className="flex gap-3 message-enter">
                 <div className="w-9 h-9 rounded-[12px] flex items-center justify-center"
                   style={{ background: "linear-gradient(135deg,#0066CC,#5AC8FA)" }}>
