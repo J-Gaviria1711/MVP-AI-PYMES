@@ -1,15 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import {
-  Bot,
-  X,
-  Send,
-  Paperclip,
-  Sparkles,
-  ChevronDown,
-  RotateCcw,
-} from "lucide-react";
+import { Bot, X, Send, Paperclip, Sparkles, ChevronDown, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Message {
@@ -19,188 +11,117 @@ interface Message {
   timestamp: Date;
 }
 
-const SUGGESTED_QUESTIONS = [
-  "¿Cuál es mi margen de utilidad este mes?",
+const SUGGESTIONS = [
+  "¿Cuál es mi margen de utilidad?",
   "¿Qué productos tienen bajo stock?",
-  "Analiza mis gastos del último trimestre",
-  "¿Cuáles son mis principales riesgos financieros?",
+  "Analiza mis gastos del trimestre",
 ];
 
 export default function AIAssistant() {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "0",
-      role: "assistant",
-      content:
-        "Hola! Soy tu asistente de IA especializado en análisis empresarial. Puedo ayudarte a entender tus finanzas, operaciones y logística con análisis de nivel experto. ¿En qué te puedo ayudar hoy?",
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([{
+    id: "0", role: "assistant", timestamp: new Date(),
+    content: "¡Hola! Soy tu asistente empresarial IA. Puedo analizar tus finanzas, operaciones y logística. ¿En qué te ayudo?",
+  }]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [uploadedFile, setUploadedFile] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [fileContext, setFileContext] = useState<string | null>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
-  const sendMessage = async (text?: string) => {
+  async function send(text?: string) {
     const content = text || input.trim();
     if (!content || loading) return;
-
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content,
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
+    const userMsg: Message = { id: Date.now().toString(), role: "user", content, timestamp: new Date() };
+    setMessages((p) => [...p, userMsg]);
     setInput("");
     setLoading(true);
-
     try {
       const res = await fetch("/api/ai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [...messages, userMsg].map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-          fileContext: uploadedFile,
-        }),
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: [...messages, userMsg].map((m) => ({ role: m.role, content: m.content })), fileContext }),
       });
-
       const data = await res.json();
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString() + "_ai",
-          role: "assistant",
-          content: data.response || "Lo siento, ocurrió un error. Intenta de nuevo.",
-          timestamp: new Date(),
-        },
-      ]);
+      setMessages((p) => [...p, { id: Date.now() + "_a", role: "assistant", content: data.response || "Error al procesar.", timestamp: new Date() }]);
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString() + "_err",
-          role: "assistant",
-          content: "Error de conexión. Verifica tu conexión e intenta de nuevo.",
-          timestamp: new Date(),
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      setMessages((p) => [...p, { id: Date.now() + "_e", role: "assistant", content: "Error de conexión. Intenta de nuevo.", timestamp: new Date() }]);
+    } finally { setLoading(false); }
+  }
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    const formData = new FormData();
-    formData.append("file", file);
-
+    const fd = new FormData(); fd.append("file", file);
+    setLoading(true);
     try {
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
       const data = await res.json();
-      setUploadedFile(data.summary);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString() + "_file",
-          role: "assistant",
-          content: `He procesado el archivo **${file.name}**. ${data.summary ? "Aquí hay un resumen:\n\n" + data.summary : "Puedes preguntarme sobre su contenido."}`,
-          timestamp: new Date(),
-        },
-      ]);
+      setFileContext(data.summary);
+      setMessages((p) => [...p, { id: Date.now() + "_f", role: "assistant", content: `Archivo **${file.name}** procesado. ¿Qué análisis necesitas?`, timestamp: new Date() }]);
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString() + "_ferr",
-          role: "assistant",
-          content: "Error al procesar el archivo. Asegúrate de que sea un formato válido (Excel, CSV).",
-          timestamp: new Date(),
-        },
-      ]);
-    }
-  };
+      setMessages((p) => [...p, { id: Date.now() + "_fe", role: "assistant", content: "Error al procesar el archivo.", timestamp: new Date() }]);
+    } finally { setLoading(false); }
+  }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
-
-  const formatContent = (text: string) => {
-    return text
-      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-      .replace(/\*(.*?)\*/g, "<em>$1</em>")
-      .replace(/\n/g, "<br/>");
-  };
+  const fmt = (t: string) => t.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br/>");
 
   return (
     <>
-      {/* Floating button */}
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-6 w-14 h-14 bg-[#0071E3] rounded-2xl flex items-center justify-center shadow-[0_8px_24px_rgba(0,113,227,0.4)] hover:bg-[#0077ED] hover:scale-105 transition-all duration-200 z-50"
+          className="fixed bottom-6 right-6 w-13 h-13 flex items-center justify-center rounded-[14px] text-white shadow-lg z-50 btn-press transition-all"
+          style={{ background: "#0066CC", width: 52, height: 52, boxShadow: "0 4px 16px rgba(0,102,204,0.4)" }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "#0077ED")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "#0066CC")}
         >
-          <Sparkles size={22} className="text-white" />
+          <Sparkles size={20} />
         </button>
       )}
 
-      {/* Chat Panel */}
       {open && (
-        <div className="fixed bottom-6 right-6 w-[400px] h-[600px] bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-[#E8E8ED] flex flex-col z-50 overflow-hidden">
+        <div
+          className="fixed bottom-6 right-6 flex flex-col z-50 modal-enter overflow-hidden"
+          style={{
+            width: 400, height: 580, background: "#fff",
+            borderRadius: 20, boxShadow: "0 20px 60px rgba(0,0,0,0.16),0 4px 16px rgba(0,0,0,0.08)",
+          }}
+        >
           {/* Header */}
-          <div className="bg-gradient-to-r from-[#0071E3] to-[#5AC8FA] px-5 py-4 flex items-center justify-between flex-shrink-0">
+          <div
+            className="flex items-center justify-between px-5 py-4 flex-shrink-0"
+            style={{ background: "linear-gradient(135deg,#0066CC,#5AC8FA)" }}
+          >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center">
+              <div className="w-8 h-8 rounded-[10px] flex items-center justify-center" style={{ background: "rgba(255,255,255,0.2)" }}>
                 <Bot size={16} className="text-white" />
               </div>
               <div>
-                <p className="text-[14px] font-semibold text-white">Asistente IA</p>
+                <p className="text-[14px] font-semibold text-white leading-tight">Asistente IA</p>
                 <div className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 bg-[#34C759] rounded-full" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#34C759]" />
                   <p className="text-[11px] text-white/80">Experto Empresarial</p>
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <button
-                onClick={() =>
-                  setMessages([
-                    {
-                      id: "0",
-                      role: "assistant",
-                      content: "Conversación reiniciada. ¿En qué te puedo ayudar?",
-                      timestamp: new Date(),
-                    },
-                  ])
-                }
-                className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center hover:bg-white/30 transition-colors"
-                title="Nueva conversación"
+                onClick={() => { setMessages([{ id: "0", role: "assistant", content: "Nueva conversación. ¿En qué te ayudo?", timestamp: new Date() }]); setFileContext(null); }}
+                className="w-8 h-8 rounded-[8px] flex items-center justify-center transition-colors"
+                style={{ background: "rgba(255,255,255,0.15)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.25)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.15)")}
               >
-                <RotateCcw size={14} className="text-white" />
+                <RotateCcw size={13} className="text-white" />
               </button>
               <button
                 onClick={() => setOpen(false)}
-                className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center hover:bg-white/30 transition-colors"
+                className="w-8 h-8 rounded-[8px] flex items-center justify-center transition-colors"
+                style={{ background: "rgba(255,255,255,0.15)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.25)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.15)")}
               >
                 <ChevronDown size={16} className="text-white" />
               </button>
@@ -208,116 +129,114 @@ export default function AIAssistant() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-[#F9F9FB]">
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3" style={{ background: "#F5F5F7" }}>
             {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={cn(
-                  "flex gap-2 message-enter",
-                  msg.role === "user" ? "justify-end" : "justify-start"
-                )}
-              >
+              <div key={msg.id} className={cn("flex gap-2 message-enter", msg.role === "user" ? "justify-end" : "justify-start")}>
                 {msg.role === "assistant" && (
-                  <div className="w-7 h-7 bg-gradient-to-br from-[#0071E3] to-[#5AC8FA] rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Bot size={13} className="text-white" />
+                  <div className="w-7 h-7 rounded-[8px] flex items-center justify-center flex-shrink-0 mt-0.5"
+                    style={{ background: "linear-gradient(135deg,#0066CC,#5AC8FA)" }}>
+                    <Bot size={12} className="text-white" />
                   </div>
                 )}
                 <div
-                  className={cn(
-                    "max-w-[78%] px-4 py-3 rounded-2xl text-[13px] leading-relaxed",
-                    msg.role === "user"
-                      ? "bg-[#0071E3] text-white rounded-tr-sm"
-                      : "bg-white text-[#1D1D1F] rounded-tl-sm shadow-[0_1px_4px_rgba(0,0,0,0.06)] border border-[#F0F0F5]"
-                  )}
-                  dangerouslySetInnerHTML={{ __html: formatContent(msg.content) }}
+                  className="max-w-[80%] px-3.5 py-2.5 text-[13px] leading-relaxed"
+                  style={{
+                    borderRadius: msg.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
+                    background: msg.role === "user" ? "#0066CC" : "#fff",
+                    color: msg.role === "user" ? "#fff" : "#1D1D1F",
+                    boxShadow: msg.role === "assistant" ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
+                  }}
+                  dangerouslySetInnerHTML={{ __html: fmt(msg.content) }}
                 />
               </div>
             ))}
-
-            {/* Typing indicator */}
             {loading && (
-              <div className="flex gap-2 justify-start message-enter">
-                <div className="w-7 h-7 bg-gradient-to-br from-[#0071E3] to-[#5AC8FA] rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Bot size={13} className="text-white" />
+              <div className="flex gap-2 message-enter">
+                <div className="w-7 h-7 rounded-[8px] flex items-center justify-center flex-shrink-0"
+                  style={{ background: "linear-gradient(135deg,#0066CC,#5AC8FA)" }}>
+                  <Bot size={12} className="text-white" />
                 </div>
-                <div className="bg-white px-4 py-3 rounded-2xl rounded-tl-sm shadow-[0_1px_4px_rgba(0,0,0,0.06)] border border-[#F0F0F5]">
+                <div className="px-3.5 py-3 rounded-[14px] rounded-tl-[4px] bg-white shadow-sm">
                   <div className="flex gap-1 items-center h-4">
-                    <div className="w-1.5 h-1.5 bg-[#AEAEB2] rounded-full typing-dot" />
-                    <div className="w-1.5 h-1.5 bg-[#AEAEB2] rounded-full typing-dot" />
-                    <div className="w-1.5 h-1.5 bg-[#AEAEB2] rounded-full typing-dot" />
+                    {[0,1,2].map((i) => (
+                      <div key={i} className={`w-1.5 h-1.5 rounded-full typing-dot`}
+                        style={{ background: "#AEAEB2" }} />
+                    ))}
                   </div>
                 </div>
               </div>
             )}
-            <div ref={messagesEndRef} />
+            {messages.length === 1 && !loading && (
+              <div className="pt-2 flex flex-col gap-2">
+                {SUGGESTIONS.map((q) => (
+                  <button key={q} onClick={() => send(q)}
+                    className="text-left text-[12px] px-3 py-2 rounded-[10px] transition-colors font-medium"
+                    style={{ background: "#F0F4FF", color: "#0066CC" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#E4EDFF")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "#F0F4FF")}
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div ref={bottomRef} />
           </div>
 
-          {/* Suggested questions (shown only at start) */}
-          {messages.length === 1 && (
-            <div className="px-4 py-3 bg-[#F9F9FB] border-t border-[#F0F0F5] flex gap-2 flex-wrap">
-              {SUGGESTED_QUESTIONS.slice(0, 2).map((q) => (
-                <button
-                  key={q}
-                  onClick={() => sendMessage(q)}
-                  className="text-[11px] px-3 py-1.5 bg-[#E8F1FC] text-[#0071E3] rounded-xl hover:bg-[#D4E8FC] transition-colors font-medium"
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
-          )}
-
           {/* Input */}
-          <div className="px-4 py-4 bg-white border-t border-[#E8E8ED] flex-shrink-0">
-            {uploadedFile && (
-              <div className="mb-2 px-3 py-1.5 bg-[#E8F8ED] rounded-xl flex items-center justify-between">
-                <p className="text-[11px] text-[#1A8A3C] font-medium">
-                  Archivo procesado activo
-                </p>
-                <button
-                  onClick={() => setUploadedFile(null)}
-                  className="text-[#1A8A3C] hover:text-[#CC2929]"
-                >
+          <div className="flex-shrink-0 px-4 py-3 bg-white" style={{ borderTop: "1px solid #F0F0F0" }}>
+            {fileContext && (
+              <div className="mb-2 px-3 py-1.5 rounded-[8px] flex items-center justify-between"
+                style={{ background: "#F0FBF4" }}>
+                <p className="text-[11px] font-medium" style={{ color: "#1A8A3C" }}>Archivo procesado activo</p>
+                <button onClick={() => setFileContext(null)} style={{ color: "#AEAEB2" }}>
                   <X size={12} />
                 </button>
               </div>
             )}
             <div className="flex items-end gap-2">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                className="hidden"
-                onChange={handleFileUpload}
-              />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="w-9 h-9 bg-[#F5F5F7] rounded-xl flex items-center justify-center hover:bg-[#E8E8ED] transition-colors flex-shrink-0"
-                title="Adjuntar archivo"
+              <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFile} />
+              <button onClick={() => fileRef.current?.click()}
+                className="w-8 h-8 flex items-center justify-center rounded-[8px] flex-shrink-0 transition-colors"
+                style={{ background: "#F5F5F7", color: "#6E6E73" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#E8E8ED")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "#F5F5F7")}
               >
-                <Paperclip size={15} className="text-[#6E6E73]" />
+                <Paperclip size={14} />
               </button>
               <textarea
-                ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
                 placeholder="Escribe tu pregunta..."
                 rows={1}
-                className="flex-1 bg-[#F5F5F7] rounded-xl px-4 py-2.5 text-[13px] text-[#1D1D1F] placeholder:text-[#AEAEB2] focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#0071E3]/20 resize-none transition-all"
-                style={{ maxHeight: "100px" }}
+                className="flex-1 px-3.5 py-2 text-[13px] outline-none transition-all resize-none"
+                style={{
+                  background: "#F5F5F7", borderRadius: 8, border: "1px solid transparent",
+                  color: "#1D1D1F", maxHeight: 80, lineHeight: 1.5,
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.background = "#fff";
+                  e.currentTarget.style.border = "1px solid #0066CC";
+                  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(0,102,204,0.15)";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.background = "#F5F5F7";
+                  e.currentTarget.style.border = "1px solid transparent";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
               />
               <button
-                onClick={() => sendMessage()}
+                onClick={() => send()}
                 disabled={!input.trim() || loading}
-                className="w-9 h-9 bg-[#0071E3] rounded-xl flex items-center justify-center hover:bg-[#0077ED] disabled:opacity-40 disabled:cursor-not-allowed transition-all flex-shrink-0"
+                className="w-8 h-8 flex items-center justify-center rounded-[8px] flex-shrink-0 text-white transition-all btn-press"
+                style={{ background: "#0066CC" }}
+                onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = "#0077ED"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "#0066CC"; }}
               >
-                <Send size={15} className="text-white" />
+                <Send size={14} />
               </button>
             </div>
-            <p className="text-[10px] text-[#AEAEB2] text-center mt-2">
-              Acepta Excel, CSV, SIIGO, SAP exports
-            </p>
           </div>
         </div>
       )}

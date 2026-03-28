@@ -1,66 +1,100 @@
-"use client";
-
 import { TrendingUp, TrendingDown, LucideIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface MetricCardProps {
   title: string;
   value: string;
   change?: number;
-  icon: LucideIcon;
+  subtitle?: string;
+  icon?: LucideIcon;
   iconColor?: string;
   iconBg?: string;
-  subtitle?: string;
-  trend?: "up" | "down" | "neutral";
+  loading?: boolean;
+}
+
+export function MetricCardSkeleton() {
+  return (
+    <div
+      className="bg-white rounded-[16px] p-6"
+      style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04)" }}
+    >
+      <div className="flex items-center justify-between mb-4">
+        <div className="skeleton w-8 h-8 rounded-[8px]" />
+        <div className="skeleton w-14 h-5 rounded-full" />
+      </div>
+      <div className="skeleton w-24 h-8 mb-2 rounded-[6px]" />
+      <div className="skeleton w-32 h-4 rounded-[4px]" />
+    </div>
+  );
 }
 
 export default function MetricCard({
   title,
   value,
   change,
-  icon: Icon,
-  iconColor = "text-[#0071E3]",
-  iconBg = "bg-[#E8F1FC]",
   subtitle,
-  trend,
+  icon: Icon,
+  iconColor = "#0066CC",
+  iconBg = "#F0F4FF",
+  loading = false,
 }: MetricCardProps) {
-  const isPositive = change !== undefined ? change >= 0 : trend === "up";
-  const isNeutral = change === 0 || trend === "neutral";
+  if (loading) return <MetricCardSkeleton />;
+
+  const isPositive = change !== undefined && change >= 0;
+  const hasChange = change !== undefined;
 
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#F0F0F5] hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] transition-all duration-200 cursor-default">
-      <div className="flex items-start justify-between mb-4">
-        <div
-          className={cn(
-            "w-10 h-10 rounded-xl flex items-center justify-center",
-            iconBg
-          )}
-        >
-          <Icon size={20} className={iconColor} />
-        </div>
-        {change !== undefined && !isNeutral && (
+    <div
+      className="bg-white rounded-[16px] p-6 transition-all duration-200 group cursor-default"
+      style={{
+        boxShadow: "0 2px 8px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04)",
+      }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLDivElement).style.boxShadow =
+          "0 8px 24px rgba(0,0,0,0.12),0 2px 8px rgba(0,0,0,0.06)";
+        (e.currentTarget as HTMLDivElement).style.transform = "translateY(-1px)";
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLDivElement).style.boxShadow =
+          "0 2px 8px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04)";
+        (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
+      }}
+    >
+      <div className="flex items-center justify-between mb-4">
+        {Icon && (
           <div
-            className={cn(
-              "flex items-center gap-1 text-[12px] font-semibold px-2 py-1 rounded-lg",
-              isPositive
-                ? "bg-[#E8F8ED] text-[#1A8A3C]"
-                : "bg-[#FEECEB] text-[#CC2929]"
-            )}
+            className="w-9 h-9 rounded-[10px] flex items-center justify-center"
+            style={{ background: iconBg }}
+          >
+            <Icon size={17} style={{ color: iconColor }} />
+          </div>
+        )}
+        {hasChange && (
+          <div
+            className="flex items-center gap-1 px-2 py-1 rounded-full text-[12px] font-medium"
+            style={{
+              background: isPositive ? "#F0FBF4" : "#FFF1F0",
+              color: isPositive ? "#1A8A3C" : "#C4302A",
+            }}
           >
             {isPositive ? (
-              <TrendingUp size={12} />
+              <TrendingUp size={11} />
             ) : (
-              <TrendingDown size={12} />
+              <TrendingDown size={11} />
             )}
-            {Math.abs(change).toFixed(1)}%
+            {isPositive ? "+" : ""}{change?.toFixed(1)}%
           </div>
         )}
       </div>
 
-      <p className="text-[13px] text-[#6E6E73] font-medium mb-1">{title}</p>
-      <p className="text-2xl font-semibold text-[#1D1D1F] tracking-tight leading-tight">
+      <p
+        className="font-semibold leading-tight mb-1"
+        style={{ fontSize: "30px", color: "#1D1D1F", letterSpacing: "-0.5px" }}
+      >
         {value}
       </p>
+
+      <p className="text-[13px] font-medium text-[#6E6E73]">{title}</p>
+
       {subtitle && (
         <p className="text-[11px] text-[#AEAEB2] mt-1">{subtitle}</p>
       )}

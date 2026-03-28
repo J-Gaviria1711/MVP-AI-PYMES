@@ -33,23 +33,71 @@ import {
 } from "recharts";
 
 const statusConfig = {
-  entregado: { label: "Entregado", color: "text-[#1A8A3C]", bg: "bg-[#E8F8ED]", icon: CheckCircle2 },
-  en_transito: { label: "En tránsito", color: "text-[#0071E3]", bg: "bg-[#E8F1FC]", icon: Truck },
-  procesando: { label: "Procesando", color: "text-[#B45309]", bg: "bg-[#FFF3E0]", icon: Clock },
+  entregado: { label: "Entregado", color: "text-[#1A8A3C]", bg: "bg-[#F0FBF4]", icon: CheckCircle2 },
+  en_transito: { label: "En tránsito", color: "text-[#0066CC]", bg: "bg-[#E8F1FC]", icon: Truck },
+  procesando: { label: "Procesando", color: "text-[#B45309]", bg: "bg-[#FFF8EC]", icon: Clock },
   pendiente: { label: "Pendiente", color: "text-[#6E6E73]", bg: "bg-[#F5F5F7]", icon: AlertTriangle },
 };
 
 const stockStatus = {
-  normal: { label: "Normal", color: "text-[#1A8A3C]", bg: "bg-[#E8F8ED]" },
-  bajo: { label: "Bajo Stock", color: "text-[#B45309]", bg: "bg-[#FFF3E0]" },
-  critico: { label: "Crítico", color: "text-[#CC2929]", bg: "bg-[#FEECEB]" },
+  normal: { label: "Normal", color: "text-[#1A8A3C]", bg: "bg-[#F0FBF4]" },
+  bajo: { label: "Bajo Stock", color: "text-[#B45309]", bg: "bg-[#FFF8EC]" },
+  critico: { label: "Crítico", color: "text-[#CC2929]", bg: "bg-[#FFF1F0]" },
+};
+
+const CustomTooltip = ({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: { value: number; name: string; color: string }[];
+  label?: string;
+}) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="apple-tooltip">
+        <p className="text-[12px] font-semibold text-[#6E6E73] mb-2">{label}</p>
+        {payload.map((p) => (
+          <p key={p.name} className="text-[12px] font-semibold" style={{ color: p.color }}>
+            {p.name}: {p.value}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
+const CustomLineTooltip = ({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: { value: number; name: string; color: string }[];
+  label?: string;
+}) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="apple-tooltip">
+        <p className="text-[12px] font-semibold text-[#6E6E73] mb-2">{label}</p>
+        {payload.map((p) => (
+          <p key={p.name} className="text-[12px] font-semibold" style={{ color: p.color }}>
+            Cumplimiento: {p.value}%
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
 };
 
 export default function OperacionesPage() {
   const totalInventoryValue = inventoryItems.reduce((a, b) => a + b.valor, 0);
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="page-enter flex flex-col min-h-screen">
       <Header
         title="Módulo Operaciones"
         subtitle="Inventario · Pedidos · Proveedores"
@@ -63,7 +111,7 @@ export default function OperacionesPage() {
             value={formatNumber(operationsKPIs.pedidosMes)}
             change={operationsKPIs.pedidosCambio}
             icon={ShoppingCart}
-            iconColor="text-[#0071E3]"
+            iconColor="text-[#0066CC]"
             iconBg="bg-[#E8F1FC]"
             subtitle="vs. mes anterior"
           />
@@ -73,7 +121,7 @@ export default function OperacionesPage() {
             change={operationsKPIs.tasaCumplimientoCambio}
             icon={CheckCircle2}
             iconColor="text-[#34C759]"
-            iconBg="bg-[#E8F8ED]"
+            iconBg="bg-[#F0FBF4]"
             subtitle="Pedidos entregados a tiempo"
           />
           <MetricCard
@@ -91,7 +139,7 @@ export default function OperacionesPage() {
             change={operationsKPIs.tiempoEntregaCambio}
             icon={Clock}
             iconColor="text-[#FF9F0A]"
-            iconBg="bg-[#FFF3E0]"
+            iconBg="bg-[#FFF8EC]"
             subtitle="Mejora del 8.5% este mes"
           />
         </div>
@@ -99,40 +147,41 @@ export default function OperacionesPage() {
         {/* Charts row */}
         <div className="grid grid-cols-2 gap-6">
           {/* Order Fulfillment Trend */}
-          <div className="bg-white rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#F0F0F5]">
-            <h3 className="text-[15px] font-semibold text-[#1D1D1F] mb-1">
+          <div
+            className="bg-white rounded-[16px] p-6"
+            style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04)" }}
+          >
+            <h3 className="text-[16px] font-semibold text-[#1D1D1F] mb-1">
               Pedidos & Cumplimiento
             </h3>
             <p className="text-[12px] text-[#6E6E73] mb-5">Ene – Jun 2024</p>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={orderFulfillment} margin={{ top: 0, right: 0, left: -25, bottom: 0 }} barCategoryGap="35%">
-                <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F5" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" vertical={false} />
                 <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#AEAEB2" }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 10, fill: "#AEAEB2" }} axisLine={false} tickLine={false} />
-                <Tooltip
-                  contentStyle={{ background: "white", border: "1px solid #E8E8ED", borderRadius: 12, fontSize: 12 }}
-                />
+                <Tooltip content={<CustomTooltip />} />
                 <Bar dataKey="pedidos" name="Total Pedidos" fill="#E8F1FC" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="entregados" name="Entregados" fill="#0071E3" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="entregados" name="Entregados" fill="#0066CC" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
           {/* Fulfillment Rate Trend */}
-          <div className="bg-white rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#F0F0F5]">
-            <h3 className="text-[15px] font-semibold text-[#1D1D1F] mb-1">
+          <div
+            className="bg-white rounded-[16px] p-6"
+            style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04)" }}
+          >
+            <h3 className="text-[16px] font-semibold text-[#1D1D1F] mb-1">
               Tasa de Cumplimiento
             </h3>
             <p className="text-[12px] text-[#6E6E73] mb-5">Tendencia mensual (%)</p>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={orderFulfillment} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F5" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" />
                 <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#AEAEB2" }} axisLine={false} tickLine={false} />
                 <YAxis domain={[90, 100]} tick={{ fontSize: 10, fill: "#AEAEB2" }} axisLine={false} tickLine={false} />
-                <Tooltip
-                  contentStyle={{ background: "white", border: "1px solid #E8E8ED", borderRadius: 12, fontSize: 12 }}
-                  formatter={(v) => [`${v}%`, "Cumplimiento"]}
-                />
+                <Tooltip content={<CustomLineTooltip />} />
                 <Line
                   type="monotone"
                   dataKey="tasa"
@@ -147,22 +196,25 @@ export default function OperacionesPage() {
         </div>
 
         {/* Inventory Table */}
-        <div className="bg-white rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#F0F0F5]">
+        <div
+          className="bg-white rounded-[16px] p-6"
+          style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04)" }}
+        >
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h3 className="text-[15px] font-semibold text-[#1D1D1F]">Control de Inventario</h3>
+              <h3 className="text-[16px] font-semibold text-[#1D1D1F]">Control de Inventario</h3>
               <p className="text-[12px] text-[#6E6E73]">
                 {inventoryItems.length} productos · Valor total: {shortCOP(totalInventoryValue)}
               </p>
             </div>
-            <button className="flex items-center gap-1.5 text-[12px] font-medium text-[#0071E3] hover:text-[#0077ED] transition-colors">
+            <button className="flex items-center gap-1.5 text-[12px] font-medium text-[#0066CC] hover:text-[#0055AA] transition-colors">
               Ver completo <ArrowUpRight size={13} />
             </button>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="apple-table w-full">
               <thead>
-                <tr className="border-b border-[#F5F5F7]">
+                <tr className="border-b border-[#F0F0F0]">
                   {["ID", "Producto", "Categoría", "Stock", "Mínimo", "Valor", "Estado"].map((h) => (
                     <th key={h} className="text-left text-[11px] font-semibold text-[#AEAEB2] uppercase tracking-wider pb-3 pr-4">
                       {h}
@@ -175,19 +227,19 @@ export default function OperacionesPage() {
                   const status = stockStatus[item.estado as keyof typeof stockStatus];
                   const stockPct = Math.min((item.stock / (item.minimo * 3)) * 100, 100);
                   return (
-                    <tr key={item.id} className="border-b border-[#F9F9FB] hover:bg-[#F9F9FB] transition-colors">
+                    <tr key={item.id} className="border-b border-[#F0F0F0] hover:bg-[#F5F5F7] transition-colors">
                       <td className="py-3 pr-4 text-[11px] text-[#AEAEB2] font-mono">{item.id}</td>
                       <td className="py-3 pr-4 text-[13px] font-medium text-[#1D1D1F]">{item.producto}</td>
                       <td className="py-3 pr-4 text-[12px] text-[#6E6E73]">{item.categoria}</td>
                       <td className="py-3 pr-4">
                         <div className="flex items-center gap-2">
                           <span className="text-[13px] font-semibold text-[#1D1D1F]">{item.stock}</span>
-                          <div className="w-16 h-1.5 bg-[#F0F0F5] rounded-full overflow-hidden">
+                          <div className="progress-track w-16">
                             <div
-                              className="h-full rounded-full"
+                              className="progress-fill"
                               style={{
                                 width: `${stockPct}%`,
-                                backgroundColor: item.estado === "critico" ? "#FF3B30" : item.estado === "bajo" ? "#FF9F0A" : "#34C759",
+                                background: item.estado === "critico" ? "#FF3B30" : item.estado === "bajo" ? "#FF9F0A" : "#34C759",
                               }}
                             />
                           </div>
@@ -196,7 +248,16 @@ export default function OperacionesPage() {
                       <td className="py-3 pr-4 text-[12px] text-[#6E6E73]">{item.minimo}</td>
                       <td className="py-3 pr-4 text-[12px] font-medium text-[#1D1D1F]">{shortCOP(item.valor)}</td>
                       <td className="py-3">
-                        <span className={`text-[11px] font-medium px-2 py-1 rounded-lg ${status.bg} ${status.color}`}>
+                        <span
+                          className={`inline-flex items-center ${status.color}`}
+                          style={{
+                            padding: "4px 10px",
+                            borderRadius: "9999px",
+                            fontSize: "12px",
+                            fontWeight: 500,
+                            background: item.estado === "normal" ? "#F0FBF4" : item.estado === "bajo" ? "#FFF8EC" : "#FFF1F0",
+                          }}
+                        >
                           {status.label}
                         </span>
                       </td>
@@ -211,14 +272,17 @@ export default function OperacionesPage() {
         {/* Orders & Suppliers Row */}
         <div className="grid grid-cols-2 gap-6">
           {/* Orders */}
-          <div className="bg-white rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#F0F0F5]">
-            <h3 className="text-[15px] font-semibold text-[#1D1D1F] mb-5">Pedidos Activos</h3>
+          <div
+            className="bg-white rounded-[16px] p-6"
+            style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04)" }}
+          >
+            <h3 className="text-[16px] font-semibold text-[#1D1D1F] mb-5">Pedidos Activos</h3>
             <div className="space-y-3">
               {ordersData.map((order) => {
                 const status = statusConfig[order.estado as keyof typeof statusConfig];
                 const StatusIcon = status.icon;
                 return (
-                  <div key={order.id} className="flex items-center justify-between py-2.5 border-b border-[#F9F9FB] last:border-0">
+                  <div key={order.id} className="flex items-center justify-between py-2.5 border-b border-[#F0F0F0] last:border-0">
                     <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-xl ${status.bg} flex items-center justify-center flex-shrink-0`}>
                         <StatusIcon size={14} className={status.color} />
@@ -239,16 +303,27 @@ export default function OperacionesPage() {
           </div>
 
           {/* Suppliers */}
-          <div className="bg-white rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#F0F0F5]">
+          <div
+            className="bg-white rounded-[16px] p-6"
+            style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04)" }}
+          >
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-[15px] font-semibold text-[#1D1D1F]">Proveedores</h3>
-              <span className="text-[11px] bg-[#F5F5F7] text-[#6E6E73] px-2 py-1 rounded-lg">
+              <h3 className="text-[16px] font-semibold text-[#1D1D1F]">Proveedores</h3>
+              <span
+                className="inline-flex items-center text-[#6E6E73]"
+                style={{
+                  padding: "4px 10px",
+                  borderRadius: "9999px",
+                  fontSize: "12px",
+                  background: "#F5F5F7",
+                }}
+              >
                 {operationsKPIs.proveedoresActivos} activos
               </span>
             </div>
             <div className="space-y-4">
               {suppliersData.map((sup) => (
-                <div key={sup.id} className="p-4 bg-[#F9F9FB] rounded-xl border border-[#F0F0F5]">
+                <div key={sup.id} className="p-4 rounded-[12px]" style={{ background: "#F5F5F7" }}>
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <p className="text-[13px] font-medium text-[#1D1D1F]">{sup.nombre}</p>
@@ -262,7 +337,7 @@ export default function OperacionesPage() {
                   <div className="flex items-center justify-between text-[11px] text-[#6E6E73]">
                     <span>Entrega: {sup.tiempoEntrega} días</span>
                     {sup.pedidosPendientes > 0 ? (
-                      <span className="text-[#0071E3] font-medium">
+                      <span className="text-[#0066CC] font-medium">
                         {sup.pedidosPendientes} pedido{sup.pedidosPendientes > 1 ? "s" : ""} pendiente · {shortCOP(sup.valorPendiente)}
                       </span>
                     ) : (

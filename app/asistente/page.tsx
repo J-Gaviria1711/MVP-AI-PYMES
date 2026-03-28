@@ -3,17 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import Header from "@/components/layout/Header";
 import {
-  Bot,
-  Send,
-  Paperclip,
-  RotateCcw,
-  Sparkles,
-  BookOpen,
-  TrendingUp,
-  Package,
-  Truck,
-  Upload,
-  X,
+  Bot, Send, Paperclip, RotateCcw, Sparkles,
+  BookOpen, TrendingUp, Package, Truck, Upload, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,174 +15,102 @@ interface Message {
   timestamp: Date;
 }
 
-const SUGGESTED_QUESTIONS = [
-  { icon: TrendingUp, text: "¿Cuál es mi margen de utilidad este mes y cómo mejorarlo?", category: "Finanzas" },
-  { icon: Package, text: "Analiza el estado de mi inventario y recomienda acciones", category: "Operaciones" },
-  { icon: Truck, text: "¿Cómo puedo reducir mis costos de logística?", category: "Logística" },
-  { icon: BookOpen, text: "¿Cuáles son mis principales riesgos financieros actuales?", category: "Finanzas" },
-  { icon: TrendingUp, text: "Genera un análisis FODA de mi negocio con los datos actuales", category: "Estrategia" },
-  { icon: Package, text: "¿Qué proveedores debo priorizar para reabastecimiento?", category: "Operaciones" },
+const SUGGESTIONS = [
+  { icon: TrendingUp,  text: "¿Cuál es mi margen de utilidad este mes y cómo mejorarlo?",       category: "Finanzas" },
+  { icon: Package,     text: "Analiza el estado de mi inventario y recomienda acciones",          category: "Operaciones" },
+  { icon: Truck,       text: "¿Cómo puedo reducir mis costos de logística?",                     category: "Logística" },
+  { icon: BookOpen,    text: "¿Cuáles son mis principales riesgos financieros actuales?",         category: "Finanzas" },
+  { icon: TrendingUp,  text: "Genera un análisis FODA de mi negocio con los datos actuales",     category: "Estrategia" },
+  { icon: Package,     text: "¿Qué proveedores debo priorizar para reabastecimiento?",           category: "Operaciones" },
 ];
 
 const CAPABILITIES = [
-  { icon: "📊", title: "Análisis Financiero", desc: "P&L, flujo de caja, indicadores, proyecciones" },
-  { icon: "📦", title: "Gestión Operativa", desc: "Inventario, pedidos, proveedores, KPIs" },
-  { icon: "🚚", title: "Optimización Logística", desc: "Rutas, costos de envío, trazabilidad" },
-  { icon: "📁", title: "Análisis de Archivos", desc: "Excel, CSV, exports de SIIGO, SAP, Oracle" },
-  { icon: "🎯", title: "Recomendaciones", desc: "Estrategias accionables basadas en tus datos" },
-  { icon: "📈", title: "Proyecciones", desc: "Forecasting financiero y de demanda" },
+  { icon: "📊", title: "Análisis Financiero",   desc: "P&L, flujo de caja, indicadores, proyecciones" },
+  { icon: "📦", title: "Gestión Operativa",     desc: "Inventario, pedidos, proveedores, KPIs" },
+  { icon: "🚚", title: "Optimización Logística",desc: "Rutas, costos de envío, trazabilidad" },
+  { icon: "📁", title: "Análisis de Archivos",  desc: "Excel, CSV, exports de SIIGO, SAP, Oracle" },
+  { icon: "🎯", title: "Recomendaciones",       desc: "Estrategias accionables basadas en tus datos" },
+  { icon: "📈", title: "Proyecciones",          desc: "Forecasting financiero y de demanda" },
 ];
 
 export default function AsistentePage() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "0",
-      role: "assistant",
-      content: "¡Hola! Soy tu asistente empresarial con inteligencia artificial de nivel experto. Tengo acceso completo a todos tus datos de finanzas, operaciones y logística.\n\n**¿Qué puedo hacer por ti hoy?**\n\nPuedo analizar tus estados financieros, identificar oportunidades de mejora, detectar riesgos, analizar archivos de tu ERP (SIIGO, SAP, Oracle, Excel) y darte recomendaciones basadas en las mejores prácticas empresariales.",
-      timestamp: new Date(),
-    },
-  ]);
-  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<Message[]>([{
+    id: "0", role: "assistant", timestamp: new Date(),
+    content: "¡Hola! Soy tu asistente empresarial con inteligencia artificial de nivel experto.\n\nTengo acceso a todos tus datos de finanzas, operaciones y logística. Puedo analizar archivos de tu ERP (SIIGO, SAP, Oracle, Excel) y darte recomendaciones basadas en las mejores prácticas empresariales.\n\n**¿En qué te puedo ayudar hoy?**",
+  }]);
+  const [input, setInput]   = useState("");
   const [loading, setLoading] = useState(false);
-  const [uploadedFile, setUploadedFile] = useState<string | null>(null);
-  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [fileCtx, setFileCtx] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const fileRef   = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
-  const sendMessage = async (text?: string) => {
+  async function send(text?: string) {
     const content = text || input.trim();
     if (!content || loading) return;
-
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content,
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
+    const userMsg: Message = { id: Date.now().toString(), role: "user", content, timestamp: new Date() };
+    setMessages((p) => [...p, userMsg]);
     setInput("");
     setLoading(true);
-
     try {
       const res = await fetch("/api/ai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [...messages, userMsg].map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-          fileContext: uploadedFile,
-        }),
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: [...messages, userMsg].map((m) => ({ role: m.role, content: m.content })), fileContext: fileCtx }),
       });
-
       const data = await res.json();
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString() + "_ai",
-          role: "assistant",
-          content: data.response || "Lo siento, ocurrió un error. Intenta de nuevo.",
-          timestamp: new Date(),
-        },
-      ]);
+      setMessages((p) => [...p, { id: Date.now() + "_a", role: "assistant", content: data.response || "Lo siento, ocurrió un error.", timestamp: new Date() }]);
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString() + "_err",
-          role: "assistant",
-          content: "Error de conexión. Verifica tu API key e intenta de nuevo.",
-          timestamp: new Date(),
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      setMessages((p) => [...p, { id: Date.now() + "_e", role: "assistant", content: "Error de conexión. Verifica tu API key e intenta de nuevo.", timestamp: new Date() }]);
+    } finally { setLoading(false); }
+  }
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    const formData = new FormData();
-    formData.append("file", file);
-
+    const fd = new FormData(); fd.append("file", file);
     setLoading(true);
     try {
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
       const data = await res.json();
-      setUploadedFile(data.summary);
-      setUploadedFileName(file.name);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString() + "_file",
-          role: "assistant",
-          content: `He procesado el archivo **${file.name}** exitosamente. ${data.summary ? "\n\nResumen del contenido:\n\n" + data.summary + "\n\n¿Qué análisis deseas que realice sobre este archivo?" : "Puedes preguntarme sobre su contenido."}`,
-          timestamp: new Date(),
-        },
-      ]);
+      setFileCtx(data.summary);
+      setFileName(file.name);
+      setMessages((p) => [...p, {
+        id: Date.now() + "_f", role: "assistant",
+        content: `He procesado el archivo **${file.name}** exitosamente.\n\n${data.summary ? "Resumen del contenido:\n\n" + data.summary + "\n\n¿Qué análisis deseas realizar?" : "Puedes preguntarme sobre su contenido."}`,
+        timestamp: new Date(),
+      }]);
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString() + "_ferr",
-          role: "assistant",
-          content: "Error al procesar el archivo. Asegúrate de que sea .xlsx, .xls o .csv.",
-          timestamp: new Date(),
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      setMessages((p) => [...p, { id: Date.now() + "_fe", role: "assistant", content: "Error al procesar el archivo. Asegúrate de que sea .xlsx, .xls o .csv.", timestamp: new Date() }]);
+    } finally { setLoading(false); }
+  }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
+  const fmt = (text: string) =>
+    text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br/>");
 
-  const formatContent = (text: string) => {
-    return text
-      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-      .replace(/\*(.*?)\*/g, "<em>$1</em>")
-      .replace(/\n/g, "<br/>");
-  };
-
-  const showWelcome = messages.length === 1;
+  const isWelcome = messages.length === 1;
 
   return (
-    <div className="flex flex-col h-screen">
-      <Header
-        title="Asistente IA"
-        subtitle="Experto en finanzas, operaciones y logística empresarial"
-      />
+    <div className="flex flex-col h-full page-enter">
+      <Header title="Asistente IA" subtitle="Experto en finanzas, operaciones y logística empresarial" />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Panel - Capabilities (shown on welcome) */}
-        {showWelcome && (
-          <div className="w-72 border-r border-[#E8E8ED] bg-white p-6 overflow-y-auto flex-shrink-0">
-            <div className="flex items-center gap-2 mb-5">
-              <Sparkles size={16} className="text-[#0071E3]" />
-              <p className="text-[13px] font-semibold text-[#1D1D1F]">Capacidades</p>
+        {/* Capabilities sidebar — only on welcome */}
+        {isWelcome && (
+          <div
+            className="w-72 flex-shrink-0 overflow-y-auto p-5"
+            style={{ background: "#fff", borderRight: "1px solid #F0F0F0" }}
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles size={14} style={{ color: "#0066CC" }} />
+              <p className="text-[12px] font-semibold text-[#1D1D1F]">Capacidades</p>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {CAPABILITIES.map((cap) => (
-                <div key={cap.title} className="p-3 bg-[#F9F9FB] rounded-xl border border-[#F0F0F5]">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[16px]">{cap.icon}</span>
+                <div key={cap.title} className="p-3 rounded-[10px]" style={{ background: "#F5F5F7" }}>
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-[15px]">{cap.icon}</span>
                     <p className="text-[12px] font-semibold text-[#1D1D1F]">{cap.title}</p>
                   </div>
                   <p className="text-[11px] text-[#6E6E73]">{cap.desc}</p>
@@ -199,163 +118,158 @@ export default function AsistentePage() {
               ))}
             </div>
 
-            <div className="mt-5 p-4 bg-gradient-to-br from-[#0071E3] to-[#5AC8FA] rounded-xl text-white">
-              <p className="text-[12px] font-semibold mb-1">Importar datos</p>
-              <p className="text-[11px] opacity-80 mb-3">
-                Sube tu archivo de SIIGO, SAP, Oracle o Excel para análisis instantáneo
-              </p>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white text-[12px] font-medium px-3 py-2 rounded-lg w-full justify-center transition-colors"
-              >
-                <Upload size={13} />
-                Subir archivo
-              </button>
-            </div>
+            <button
+              onClick={() => fileRef.current?.click()}
+              className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-[10px] text-[13px] font-medium text-white btn-press transition-all"
+              style={{ background: "#0066CC" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#0077ED")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "#0066CC")}
+            >
+              <Upload size={14} />
+              Importar archivo
+            </button>
           </div>
         )}
 
         {/* Chat area */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-[#F9F9FB]">
+        <div className="flex-1 flex flex-col overflow-hidden" style={{ background: "#F5F5F7" }}>
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+          <div className="flex-1 overflow-y-auto px-8 py-6 space-y-5">
             {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={cn(
-                  "flex gap-3 message-enter",
-                  msg.role === "user" ? "justify-end" : "justify-start"
-                )}
-              >
+              <div key={msg.id} className={cn("flex gap-3 message-enter", msg.role === "user" ? "justify-end" : "justify-start")}>
                 {msg.role === "assistant" && (
-                  <div className="w-9 h-9 bg-gradient-to-br from-[#0071E3] to-[#5AC8FA] rounded-2xl flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+                  <div className="w-9 h-9 rounded-[12px] flex items-center justify-center flex-shrink-0 mt-0.5"
+                    style={{ background: "linear-gradient(135deg,#0066CC,#5AC8FA)" }}>
                     <Bot size={16} className="text-white" />
                   </div>
                 )}
                 <div
-                  className={cn(
-                    "max-w-[70%] px-5 py-4 rounded-2xl text-[14px] leading-relaxed shadow-sm",
-                    msg.role === "user"
-                      ? "bg-[#0071E3] text-white rounded-tr-sm"
-                      : "bg-white text-[#1D1D1F] rounded-tl-sm border border-[#F0F0F5]"
-                  )}
-                  dangerouslySetInnerHTML={{ __html: formatContent(msg.content) }}
+                  className="max-w-[70%] px-5 py-4 text-[14px] leading-relaxed"
+                  style={{
+                    borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+                    background: msg.role === "user" ? "#0066CC" : "#fff",
+                    color: msg.role === "user" ? "#fff" : "#1D1D1F",
+                    boxShadow: msg.role === "assistant" ? "0 2px 8px rgba(0,0,0,0.06)" : "none",
+                  }}
+                  dangerouslySetInnerHTML={{ __html: fmt(msg.content) }}
                 />
               </div>
             ))}
 
-            {/* Typing indicator */}
             {loading && (
-              <div className="flex gap-3 justify-start message-enter">
-                <div className="w-9 h-9 bg-gradient-to-br from-[#0071E3] to-[#5AC8FA] rounded-2xl flex items-center justify-center shadow-sm">
+              <div className="flex gap-3 message-enter">
+                <div className="w-9 h-9 rounded-[12px] flex items-center justify-center"
+                  style={{ background: "linear-gradient(135deg,#0066CC,#5AC8FA)" }}>
                   <Bot size={16} className="text-white" />
                 </div>
-                <div className="bg-white px-5 py-4 rounded-2xl rounded-tl-sm shadow-sm border border-[#F0F0F5]">
+                <div className="px-5 py-4 rounded-[18px] rounded-tl-[4px] bg-white shadow-sm">
                   <div className="flex gap-1.5 items-center">
-                    <div className="w-2 h-2 bg-[#AEAEB2] rounded-full typing-dot" />
-                    <div className="w-2 h-2 bg-[#AEAEB2] rounded-full typing-dot" />
-                    <div className="w-2 h-2 bg-[#AEAEB2] rounded-full typing-dot" />
+                    {[0,1,2].map((i) => <div key={i} className={`w-2 h-2 rounded-full typing-dot`} style={{ background: "#AEAEB2" }} />)}
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Suggested questions (welcome state) */}
-            {showWelcome && !loading && (
-              <div className="grid grid-cols-2 gap-3 mt-2">
-                {SUGGESTED_QUESTIONS.map((q) => (
+            {/* Suggested questions on welcome */}
+            {isWelcome && !loading && (
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                {SUGGESTIONS.map((q) => (
                   <button
                     key={q.text}
-                    onClick={() => sendMessage(q.text)}
-                    className="flex items-start gap-3 p-4 bg-white rounded-xl border border-[#F0F0F5] hover:border-[#0071E3] hover:shadow-md text-left transition-all group"
+                    onClick={() => send(q.text)}
+                    className="flex items-start gap-3 p-4 text-left rounded-[14px] bg-white transition-all group"
+                    style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)", border: "1px solid transparent" }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "#0066CC";
+                      e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "transparent";
+                      e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.06)";
+                    }}
                   >
-                    <div className="w-8 h-8 bg-[#E8F1FC] rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-[#0071E3] transition-colors">
-                      <q.icon size={15} className="text-[#0071E3] group-hover:text-white transition-colors" />
+                    <div className="w-8 h-8 rounded-[10px] flex items-center justify-center flex-shrink-0 transition-colors"
+                      style={{ background: "#F0F4FF" }}>
+                      <q.icon size={15} style={{ color: "#0066CC" }} />
                     </div>
                     <div>
-                      <p className="text-[11px] font-semibold text-[#0071E3] mb-0.5">{q.category}</p>
-                      <p className="text-[12px] text-[#3D3D3D] leading-tight">{q.text}</p>
+                      <p className="text-[10px] font-semibold mb-0.5" style={{ color: "#0066CC" }}>{q.category}</p>
+                      <p className="text-[12px] text-[#3D3D3D] leading-snug">{q.text}</p>
                     </div>
                   </button>
                 ))}
               </div>
             )}
 
-            <div ref={messagesEndRef} />
+            <div ref={bottomRef} />
           </div>
 
-          {/* Input area */}
-          <div className="bg-white border-t border-[#E8E8ED] px-8 py-5">
-            {uploadedFileName && (
-              <div className="mb-3 px-4 py-2 bg-[#E8F8ED] rounded-xl flex items-center justify-between">
+          {/* Input */}
+          <div className="flex-shrink-0 px-8 py-5 bg-white" style={{ borderTop: "1px solid #F0F0F0" }}>
+            {fileName && (
+              <div className="mb-3 px-4 py-2 rounded-[10px] flex items-center justify-between" style={{ background: "#F0FBF4" }}>
                 <div className="flex items-center gap-2">
-                  <Paperclip size={12} className="text-[#1A8A3C]" />
-                  <p className="text-[12px] text-[#1A8A3C] font-medium">
-                    Archivo activo: {uploadedFileName}
-                  </p>
+                  <Paperclip size={12} style={{ color: "#1A8A3C" }} />
+                  <p className="text-[12px] font-medium" style={{ color: "#1A8A3C" }}>Activo: {fileName}</p>
                 </div>
-                <button
-                  onClick={() => { setUploadedFile(null); setUploadedFileName(null); }}
-                  className="text-[#6E6E73] hover:text-[#CC2929] transition-colors"
-                >
+                <button onClick={() => { setFileCtx(null); setFileName(null); }} style={{ color: "#AEAEB2" }}>
                   <X size={14} />
                 </button>
               </div>
             )}
-
             <div className="flex items-end gap-3">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                className="hidden"
-                onChange={handleFileUpload}
-              />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="w-10 h-10 bg-[#F5F5F7] rounded-xl flex items-center justify-center hover:bg-[#E8E8ED] transition-colors flex-shrink-0"
-                title="Adjuntar archivo (Excel, CSV)"
+              <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFile} />
+              <button onClick={() => fileRef.current?.click()}
+                className="w-10 h-10 flex items-center justify-center rounded-[10px] flex-shrink-0 transition-colors"
+                style={{ background: "#F5F5F7", color: "#6E6E73" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#E8E8ED")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "#F5F5F7")}
               >
-                <Paperclip size={16} className="text-[#6E6E73]" />
+                <Paperclip size={16} />
               </button>
-
-              <button
-                onClick={() => {
-                  setMessages([{
-                    id: "0",
-                    role: "assistant",
-                    content: "Conversación reiniciada. ¿En qué te puedo ayudar?",
-                    timestamp: new Date(),
-                  }]);
-                  setUploadedFile(null);
-                  setUploadedFileName(null);
-                }}
-                className="w-10 h-10 bg-[#F5F5F7] rounded-xl flex items-center justify-center hover:bg-[#E8E8ED] transition-colors flex-shrink-0"
-                title="Nueva conversación"
+              <button onClick={() => { setMessages([{ id: "0", role: "assistant", content: "Conversación reiniciada. ¿En qué te ayudo?", timestamp: new Date() }]); setFileCtx(null); setFileName(null); }}
+                className="w-10 h-10 flex items-center justify-center rounded-[10px] flex-shrink-0 transition-colors"
+                style={{ background: "#F5F5F7", color: "#6E6E73" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#E8E8ED")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "#F5F5F7")}
               >
-                <RotateCcw size={15} className="text-[#6E6E73]" />
+                <RotateCcw size={15} />
               </button>
-
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
                 placeholder="Escribe tu pregunta o análisis que necesitas..."
                 rows={1}
-                className="flex-1 bg-[#F5F5F7] rounded-xl px-5 py-3 text-[14px] text-[#1D1D1F] placeholder:text-[#AEAEB2] focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#0071E3]/20 resize-none transition-all"
-                style={{ maxHeight: "120px" }}
+                className="flex-1 px-4 py-3 text-[14px] outline-none resize-none transition-all"
+                style={{
+                  background: "#F5F5F7", borderRadius: 10, border: "1px solid transparent",
+                  color: "#1D1D1F", maxHeight: 120, lineHeight: 1.5,
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.background = "#fff";
+                  e.currentTarget.style.border = "1px solid #0066CC";
+                  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(0,102,204,0.15)";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.background = "#F5F5F7";
+                  e.currentTarget.style.border = "1px solid transparent";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
               />
-
               <button
-                onClick={() => sendMessage()}
+                onClick={() => send()}
                 disabled={!input.trim() || loading}
-                className="w-10 h-10 bg-[#0071E3] rounded-xl flex items-center justify-center hover:bg-[#0077ED] disabled:opacity-40 disabled:cursor-not-allowed transition-all flex-shrink-0 shadow-sm"
+                className="w-10 h-10 flex items-center justify-center rounded-[10px] flex-shrink-0 text-white transition-all btn-press"
+                style={{ background: "#0066CC" }}
+                onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = "#0077ED"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "#0066CC"; }}
               >
-                <Send size={16} className="text-white" />
+                <Send size={16} />
               </button>
             </div>
-            <p className="text-[11px] text-[#AEAEB2] mt-2 text-center">
-              Acepta archivos: .xlsx · .xls · .csv · Exports de SIIGO, SAP, Oracle · Enter para enviar
+            <p className="text-[11px] text-center mt-2" style={{ color: "#AEAEB2" }}>
+              Acepta .xlsx · .xls · .csv · SIIGO · SAP · Oracle · Enter para enviar
             </p>
           </div>
         </div>

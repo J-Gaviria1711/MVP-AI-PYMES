@@ -47,7 +47,7 @@ const CustomTooltip = ({
 }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white rounded-xl shadow-lg border border-[#E8E8ED] px-4 py-3 min-w-[160px]">
+      <div className="apple-tooltip">
         <p className="text-[12px] font-semibold text-[#6E6E73] mb-2">{label}</p>
         {payload.map((p) => (
           <p key={p.name} className="text-[12px] font-semibold" style={{ color: p.color }}>
@@ -64,7 +64,7 @@ const tabs = ["Resumen", "Flujo de Caja", "P&L", "Presupuesto"];
 
 export default function FinanzasPage() {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="page-enter flex flex-col min-h-screen">
       <Header
         title="Módulo Finanzas"
         subtitle="Análisis financiero completo · PESOS COP"
@@ -94,7 +94,7 @@ export default function FinanzasPage() {
             value={shortCOP(financeKPIs.ingresosMes)}
             change={financeKPIs.ingresosCambio}
             icon={TrendingUp}
-            iconColor="text-[#0071E3]"
+            iconColor="text-[#0066CC]"
             iconBg="bg-[#E8F1FC]"
             subtitle="vs. mes anterior"
           />
@@ -104,7 +104,7 @@ export default function FinanzasPage() {
             change={-financeKPIs.gastosCambio}
             icon={TrendingDown}
             iconColor="text-[#FF9F0A]"
-            iconBg="bg-[#FFF3E0]"
+            iconBg="bg-[#FFF8EC]"
             subtitle="vs. mes anterior"
           />
           <MetricCard
@@ -113,7 +113,7 @@ export default function FinanzasPage() {
             change={financeKPIs.utilidadCambio}
             icon={DollarSign}
             iconColor="text-[#34C759]"
-            iconBg="bg-[#E8F8ED]"
+            iconBg="bg-[#F0FBF4]"
             subtitle={`Margen: ${financeKPIs.margenBruto}%`}
           />
           <MetricCard
@@ -134,7 +134,7 @@ export default function FinanzasPage() {
               label: "Cuentas por Cobrar",
               value: formatCOP(financeKPIs.cuentasPorCobrar),
               icon: ArrowUpRight,
-              color: "#0071E3",
+              color: "#0066CC",
               bg: "#E8F1FC",
               note: "Promedio 32 días",
             },
@@ -143,7 +143,7 @@ export default function FinanzasPage() {
               value: formatCOP(financeKPIs.cuentasPorPagar),
               icon: ArrowDownRight,
               color: "#FF3B30",
-              bg: "#FEECEB",
+              bg: "#FFF1F0",
               note: "Vencimiento promedio 45 días",
             },
             {
@@ -151,13 +151,14 @@ export default function FinanzasPage() {
               value: `${financeKPIs.roiMarketing}x`,
               icon: BarChart3,
               color: "#34C759",
-              bg: "#E8F8ED",
+              bg: "#F0FBF4",
               note: "Por cada $1 invertido",
             },
           ].map((item) => (
             <div
               key={item.label}
-              className="bg-white rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#F0F0F5] flex items-center gap-4"
+              className="bg-white rounded-[16px] p-6 flex items-center gap-4"
+              style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04)" }}
             >
               <div
                 className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -177,26 +178,29 @@ export default function FinanzasPage() {
         {/* Charts */}
         <div className="grid grid-cols-3 gap-6">
           {/* Revenue trend */}
-          <div className="col-span-2 bg-white rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#F0F0F5]">
+          <div
+            className="col-span-2 bg-white rounded-[16px] p-6"
+            style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04)" }}
+          >
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h3 className="text-[15px] font-semibold text-[#1D1D1F]">
+                <h3 className="text-[16px] font-semibold text-[#1D1D1F]">
                   Evolución Financiera
                 </h3>
                 <p className="text-[12px] text-[#6E6E73]">Ingresos · Gastos · Utilidad</p>
               </div>
-              <select className="text-[12px] text-[#6E6E73] bg-[#F5F5F7] border-0 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#0071E3]/20">
+              <select className="text-[12px] text-[#6E6E73] bg-[#F5F5F7] border-0 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#0066CC]/20">
                 <option>2024</option>
                 <option>2023</option>
               </select>
             </div>
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={monthlyFinancials} margin={{ top: 0, right: 0, left: -20, bottom: 0 }} barCategoryGap="30%">
-                <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F5" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" vertical={false} />
                 <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#AEAEB2" }} axisLine={false} tickLine={false} />
                 <YAxis tickFormatter={(v) => shortCOP(v)} tick={{ fontSize: 10, fill: "#AEAEB2" }} axisLine={false} tickLine={false} />
                 <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="ingresos" name="Ingresos" fill="#0071E3" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="ingresos" name="Ingresos" fill="#0066CC" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="gastos" name="Gastos" fill="#E8F1FC" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="utilidad" name="Utilidad" fill="#34C759" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -204,8 +208,11 @@ export default function FinanzasPage() {
           </div>
 
           {/* Expense breakdown */}
-          <div className="bg-white rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#F0F0F5]">
-            <h3 className="text-[15px] font-semibold text-[#1D1D1F] mb-1">
+          <div
+            className="bg-white rounded-[16px] p-6"
+            style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04)" }}
+          >
+            <h3 className="text-[16px] font-semibold text-[#1D1D1F] mb-1">
               Estructura de Gastos
             </h3>
             <p className="text-[12px] text-[#6E6E73] mb-3">Junio 2024</p>
@@ -244,10 +251,13 @@ export default function FinanzasPage() {
         </div>
 
         {/* Cash flow chart */}
-        <div className="bg-white rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#F0F0F5]">
+        <div
+          className="bg-white rounded-[16px] p-6"
+          style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04)" }}
+        >
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h3 className="text-[15px] font-semibold text-[#1D1D1F]">Flujo de Caja</h3>
+              <h3 className="text-[16px] font-semibold text-[#1D1D1F]">Flujo de Caja</h3>
               <p className="text-[12px] text-[#6E6E73]">Entradas, salidas y acumulado</p>
             </div>
             <div className="flex items-center gap-3 text-[11px] text-[#6E6E73]">
@@ -260,7 +270,7 @@ export default function FinanzasPage() {
                 Salidas
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-0.5 bg-[#0071E3]" />
+                <div className="w-3 h-0.5 bg-[#0066CC]" />
                 Acumulado
               </div>
             </div>
@@ -273,32 +283,35 @@ export default function FinanzasPage() {
                   <stop offset="95%" stopColor="#34C759" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="colorAcumulado" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#0071E3" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#0071E3" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#0066CC" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="#0066CC" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F5" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" />
               <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#AEAEB2" }} axisLine={false} tickLine={false} />
               <YAxis tickFormatter={(v) => shortCOP(Math.abs(v))} tick={{ fontSize: 10, fill: "#AEAEB2" }} axisLine={false} tickLine={false} />
               <Tooltip content={<CustomTooltip />} />
-              <ReferenceLine y={0} stroke="#E8E8ED" strokeDasharray="4 2" />
+              <ReferenceLine y={0} stroke="#D2D2D7" strokeDasharray="4 2" />
               <Area type="monotone" dataKey="entradas" name="Entradas" stroke="#34C759" strokeWidth={2} fill="url(#colorEntradas)" />
               <Area type="monotone" dataKey="salidas" name="Salidas" stroke="#FF3B30" strokeWidth={2} fill="none" strokeDasharray="4 2" />
-              <Area type="monotone" dataKey="acumulado" name="Acumulado" stroke="#0071E3" strokeWidth={2.5} fill="url(#colorAcumulado)" />
+              <Area type="monotone" dataKey="acumulado" name="Acumulado" stroke="#0066CC" strokeWidth={2.5} fill="url(#colorAcumulado)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
         {/* Budget vs Actual */}
-        <div className="bg-white rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#F0F0F5]">
-          <h3 className="text-[15px] font-semibold text-[#1D1D1F] mb-1">
+        <div
+          className="bg-white rounded-[16px] p-6"
+          style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04)" }}
+        >
+          <h3 className="text-[16px] font-semibold text-[#1D1D1F] mb-1">
             Presupuesto vs. Real
           </h3>
           <p className="text-[12px] text-[#6E6E73] mb-5">Junio 2024 · Variación en %</p>
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="apple-table w-full">
               <thead>
-                <tr className="border-b border-[#F5F5F7]">
+                <tr className="border-b border-[#F0F0F0]">
                   {["Categoría", "Presupuesto", "Real", "Variación", "Estado"].map((h) => (
                     <th key={h} className="text-left text-[11px] font-semibold text-[#6E6E73] uppercase tracking-wider pb-3 pr-4">
                       {h}
@@ -310,7 +323,7 @@ export default function FinanzasPage() {
                 {budgetVsActual.map((row) => {
                   const favorable = row.variacion >= 0;
                   return (
-                    <tr key={row.categoria} className="border-b border-[#F9F9FB] hover:bg-[#F9F9FB] transition-colors">
+                    <tr key={row.categoria} className="border-b border-[#F0F0F0] hover:bg-[#F5F5F7] transition-colors">
                       <td className="py-3 pr-4 text-[13px] font-medium text-[#1D1D1F]">{row.categoria}</td>
                       <td className="py-3 pr-4 text-[13px] text-[#6E6E73]">{formatCOP(row.presupuesto)}</td>
                       <td className="py-3 pr-4 text-[13px] font-medium text-[#1D1D1F]">{formatCOP(row.real)}</td>
@@ -320,7 +333,17 @@ export default function FinanzasPage() {
                         </span>
                       </td>
                       <td className="py-3">
-                        <span className={`text-[11px] font-medium px-2 py-1 rounded-lg ${favorable ? "bg-[#E8F8ED] text-[#1A8A3C]" : "bg-[#FEECEB] text-[#CC2929]"}`}>
+                        <span
+                          className="inline-flex items-center"
+                          style={{
+                            padding: "4px 10px",
+                            borderRadius: "9999px",
+                            fontSize: "12px",
+                            fontWeight: 500,
+                            background: favorable ? "#F0FBF4" : "#FFF1F0",
+                            color: favorable ? "#1A8A3C" : "#CC2929",
+                          }}
+                        >
                           {favorable ? "✓ Meta" : "▼ Déficit"}
                         </span>
                       </td>
@@ -333,8 +356,11 @@ export default function FinanzasPage() {
         </div>
 
         {/* Financial Indicators */}
-        <div className="bg-white rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#F0F0F5]">
-          <h3 className="text-[15px] font-semibold text-[#1D1D1F] mb-5">
+        <div
+          className="bg-white rounded-[16px] p-6"
+          style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04)" }}
+        >
+          <h3 className="text-[16px] font-semibold text-[#1D1D1F] mb-5">
             Indicadores Financieros Clave
           </h3>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -350,7 +376,8 @@ export default function FinanzasPage() {
             ].map((indicator) => (
               <div
                 key={indicator.name}
-                className="p-4 bg-[#F9F9FB] rounded-xl border border-[#F0F0F5]"
+                className="p-4 rounded-[12px]"
+                style={{ background: "#F5F5F7" }}
               >
                 <div className="flex items-start justify-between mb-2">
                   <p className="text-[11px] text-[#6E6E73] font-medium leading-tight">{indicator.name}</p>
