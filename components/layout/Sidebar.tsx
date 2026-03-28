@@ -12,6 +12,10 @@ import {
   Building2,
   Settings,
   HelpCircle,
+  MessageSquare,
+  Landmark,
+  FileText,
+  Timer,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +46,13 @@ const navItems = [
     icon: Bot,
     badge: "IA",
   },
+];
+
+const phase2Items = [
+  { label: "WhatsApp", href: "/whatsapp", icon: MessageSquare, badge: "Nuevo" },
+  { label: "Conciliación", href: "/conciliacion", icon: Landmark },
+  { label: "Documentos", href: "/documentos", icon: FileText },
+  { label: "Jobs Automáticos", href: "/admin/jobs", icon: Timer },
 ];
 
 const bottomItems = [
@@ -88,7 +99,7 @@ export default function Sidebar() {
         <p className="text-[10px] font-semibold text-[#AEAEB2] uppercase tracking-wider px-3 mb-2">
           Módulos
         </p>
-        {navItems.map((item) => {
+        {[...navItems, ...phase2Items].map((item) => {
           const isActive =
             item.href === "/"
               ? pathname === "/"

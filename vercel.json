@@ -1,0 +1,20 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/generate-fees",
+      "schedule": "0 0 1 * *"
+    },
+    {
+      "path": "/api/cron/reminders-30",
+      "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/cron/reminders-60",
+      "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/cron/weekly-summary",
+      "schedule": "0 14 * * 1"
+    }
+  ]
+}
